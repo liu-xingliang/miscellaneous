@@ -1,5 +1,7 @@
 ### Table of Contents
 **[Install monocle3 and seurat3 (develop) under conda](#install-monocle3-and-seurat3-(develop)-under-conda)**<br>
+**[Problem of running partial PCA using irlba](#problem-of-running-partial-pca-using-irlba)**<br>
+**[Changing default BLAS library used by conda virtual env](#changing-default-blas-library-used-by-conda-virtual-env)**<br>
 
 ## Install monocle3 and seurat3 (develop) under conda
 
@@ -223,5 +225,40 @@ loaded via a namespace (and not attached):
 [103] callr_3.4.3            digest_0.6.25          tidyr_1.0.2           
 [106] munsell_0.5.0          viridisLite_0.3.0      sessioninfo_1.1.1    
 ```
+
+## Problem of running partial PCA using [irlba](https://github.com/bwlewis/irlba)
+## Changing default BLAS library used by conda virtual env
+
+Encounter the problem when running [Seurat](https://github.com/satijalab/seurat) (3.1.5) with irlba (2.3.3)
+
+As posted by [@ShanSabri](https://github.com/bwlewis/irlba/issues/14#issue-196206544), the error message looks like:
+> Error in irlba(t(x), nv = n) : <br>
+BLAS/LAPACK routine 'DLASCL' gave error code -4
+
+Based on [@moskalenko 's answer issue](https://github.com/bwlewis/irlba/issues/14#issuecomment-608040133) in [#14](https://github.com/bwlewis/irlba/issues/14) of [irlba github](https://github.com/bwlewis/irlba), the error seems related to different variants of [BLAS](http://www.netlib.org/blas/) library and only [OpenBLAS](https://www.openblas.net/) can get around of this error.
+
+Under Anaconda environment, the default BLAS library used by your R may not be OpenBLAS. You can change it by:
+
+1.  Install OpenBLAS by `conda install -c anaconda openblas`
+2.  Based on @merv post in [this stack overflow thread](https://stackoverflow.com/questions/58834940/conda-install-r-essentials-with-mkl), switch default blas library to OpenBLAS by creating a YAML file, for example `environment.yml`:
+
+```yaml
+name: R_openblas
+channels:
+  - conda-forge
+dependencies:
+  # Using libblas-3.8.0-16_openblas.tar.bz2 in https://anaconda.org/conda-forge/libblas
+  - conda-forge::libblas=3.8.0=16_openblas
+```
+
+Finally, run
+
+```bash
+conda env update --prefix $your_env_dir --file environment.yml --prune
+```
+
+Based on [conda docs of manage-environments](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
+
+> The --prune option causes conda to remove any dependencies that are no longer required from the environment.
 
 
